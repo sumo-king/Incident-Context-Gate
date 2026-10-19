@@ -1,0 +1,167 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Report an incident</title>
+  <meta name="description" content="Demo of a context-checked incident intake for Compute Services.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Public+Sans:ital,wght@0,400;0,500;0,600;0,800;1,400&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%231E5A73'/%3E%3Cpath d='M9 9v14M23 9v14M9 16h14' stroke='white' stroke-width='3' stroke-linecap='round'/%3E%3C/svg%3E">
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">
+      <span class="brand-mark" aria-hidden="true"></span>
+      <span>Compute Services incident desk</span>
+    </div>
+    <div class="mode" id="mode" role="status">
+      <span class="mode-dot"></span><span id="mode-text">Connecting to context check…</span>
+    </div>
+  </header>
+
+  <main class="shell">
+    <ol class="stepper" id="stepper" aria-label="Progress">
+      <li data-step="1" class="is-current"><span>1</span>What's affected</li>
+      <li data-step="2"><span>2</span>Describe it</li>
+      <li data-step="3"><span>3</span>Review and log</li>
+    </ol>
+
+    <!-- Step 1 -->
+    <section class="step" id="step-1" aria-labelledby="h1">
+      <h1 id="h1">What's having the problem?</h1>
+      <p class="lede">Pick the kind of system, then tell us its name. You'll find the name on the server's asset tag, in the CMDB, or in the alert you received.</p>
+
+      <fieldset class="tiles">
+        <legend class="sr-only">Type of system</legend>
+        <label class="tile"><input type="radio" name="category" value="virtual_machine" checked>
+          <strong>Virtual machine</strong><small>VMware VMs, slow or unreachable VMs, snapshots, migrations</small></label>
+        <label class="tile"><input type="radio" name="category" value="windows_server">
+          <strong>Windows server</strong><small>Services, logons, patching, disk space, event log errors</small></label>
+        <label class="tile"><input type="radio" name="category" value="linux_server">
+          <strong>Linux server</strong><small>Services, SSH access, filesystems, cron jobs, packages</small></label>
+        <label class="tile"><input type="radio" name="category" value="storage">
+          <strong>Storage</strong><small>File shares, LUNs, capacity, backups and restores</small></label>
+      </fieldset>
+
+      <div class="row">
+        <label class="field grow">
+          <span class="label">Server, VM or share name</span>
+          <input id="object" type="text" autocomplete="off" spellcheck="false" placeholder="e.g. ZAJHBVM0142" maxlength="120">
+          <span class="hint" id="object-error" hidden>Enter the name so engineers know where to look.</span>
+        </label>
+        <div class="field">
+          <span class="label" id="env-label">Environment</span>
+          <div class="segmented" role="radiogroup" aria-labelledby="env-label">
+            <label><input type="radio" name="env" value="production" checked><span>Production</span></label>
+            <label><input type="radio" name="env" value="uat"><span>UAT</span></label>
+            <label><input type="radio" name="env" value="development"><span>Dev</span></label>
+            <label><input type="radio" name="env" value="dr"><span>DR</span></label>
+          </div>
+        </div>
+      </div>
+
+      <div class="actions">
+        <button class="btn primary" id="to-2">Continue</button>
+      </div>
+    </section>
+
+    <!-- Step 2 -->
+    <section class="step" id="step-2" hidden aria-labelledby="h2">
+      <div class="describe">
+        <div class="describe-main">
+          <h1 id="h2">What's happening?</h1>
+          <p class="lede">Describe it the way you'd explain it to a colleague. Before it's logged, we'll check it has what an engineer needs to start straight away, so nobody has to call you back.</p>
+
+          <label class="field">
+            <span class="label">Description</span>
+            <textarea id="desc" rows="8" maxlength="4000" placeholder="What are you seeing, when did it start, and who is affected?"></textarea>
+          </label>
+          <p class="examples">Try an example:
+            <button class="link" data-example="vague">a vague report</button> or
+            <button class="link" data-example="partial">a half-complete one</button> or
+            <button class="link" data-example="good">a detailed one</button>
+          </p>
+
+          <div id="followups" class="followups" hidden aria-live="polite">
+            <h2>A few more details</h2>
+            <div id="followup-list"></div>
+          </div>
+
+          <p class="error" id="check-error" hidden role="alert"></p>
+
+          <div class="actions">
+            <button class="btn ghost" id="back-1">Back</button>
+            <button class="btn primary" id="check">Check my description</button>
+            <button class="btn primary" id="to-3" hidden>Continue to review</button>
+          </div>
+          <p class="override" id="override" hidden>
+            Still stuck? <button class="link" id="log-anyway">Log it with what I have</button>. It will be marked as needing more information, which usually means a slower response.
+          </p>
+        </div>
+
+        <aside class="gate" id="gate" aria-labelledby="gate-title" aria-live="polite">
+          <div class="gate-head">
+            <h2 id="gate-title">Context check</h2>
+            <span class="gate-state" id="gate-state">Not checked yet</span>
+          </div>
+          <div class="meter" aria-hidden="true"><span id="meter-fill"></span></div>
+          <ul class="slots" id="slots"></ul>
+          <p class="gate-msg" id="gate-msg">Write your description, then select <em>Check my description</em>.</p>
+        </aside>
+      </div>
+    </section>
+
+    <!-- Step 3 -->
+    <section class="step" id="step-3" hidden aria-labelledby="h3">
+      <h1 id="h3">Review and log</h1>
+      <p class="lede">This is what the engineer will see. Check it reads right, then log the incident.</p>
+
+      <div class="review">
+        <div class="ticket">
+          <div class="ticket-row"><span>System</span><strong id="r-object"></strong></div>
+          <div class="ticket-row"><span>Type</span><span id="r-category"></span></div>
+          <div class="ticket-row"><span>Environment</span><span id="r-env"></span></div>
+          <div class="ticket-row"><span>Assigned to</span><span id="r-group"></span></div>
+          <div class="ticket-row"><span>Suggested priority</span><span id="r-priority" class="pill"></span></div>
+          <div class="ticket-block">
+            <span>Summary for the engineer</span>
+            <p id="r-summary"></p>
+          </div>
+          <details class="ticket-block">
+            <summary>Your full description</summary>
+            <p id="r-desc" class="pre"></p>
+          </details>
+          <p class="flag" id="r-flag" hidden>Logged without complete context. The engineer may contact you for more detail.</p>
+        </div>
+      </div>
+
+      <div class="actions">
+        <button class="btn ghost" id="back-2">Edit description</button>
+        <button class="btn primary" id="submit">Log incident</button>
+      </div>
+    </section>
+
+    <!-- Done -->
+    <section class="step" id="step-done" hidden aria-labelledby="h4">
+      <div class="done">
+        <p class="done-kicker">Incident logged</p>
+        <h1 id="h4"><span id="inc-number"></span></h1>
+        <p class="lede">We've sent this to <strong id="d-group"></strong> with priority <strong id="d-priority"></strong>. Keep the number above if you need to follow up.</p>
+        <ol class="next">
+          <li><strong>Assigned</strong>It's in the resolver group's queue now.</li>
+          <li><strong>Picked up</strong>An engineer reviews your description and starts work, with no call-back needed for basics.</li>
+          <li><strong>Updates</strong>You'll get an email when the status changes or the incident is resolved.</li>
+        </ol>
+        <p class="demo-note">This is a demo. Nothing was sent to ServiceNow.</p>
+        <div class="actions"><button class="btn primary" id="again">Report another incident</button></div>
+      </div>
+    </section>
+  </main>
+
+  <script src="config.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>

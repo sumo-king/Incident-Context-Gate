@@ -1,0 +1,19 @@
+[build]
+  publish = "frontend"
+  command = ""
+
+# Forward the context check to the Pydantic AI service.
+# Replace the host below with your Render URL after deploying the backend.
+# Until you do, the portal falls back to its built-in rules so the demo still works.
+[[redirects]]
+  from = "/api/*"
+  to = "https://incident-context-gate-api.onrender.com/api/:splat"
+  status = 200
+  force = true
+
+[[headers]]
+  for = "/*"
+  [headers.values]
+    X-Frame-Options = "DENY"
+    X-Content-Type-Options = "nosniff"
+    Referrer-Policy = "strict-origin-when-cross-origin"
