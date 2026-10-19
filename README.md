@@ -122,3 +122,14 @@ backend/
   models.py           Request and response models
   tests/test_gate.py  Tests with a stand-in model
 ```
+
+
+
+brew install ollama
+OLLAMA_CONTEXT_LENGTH=8192 ollama serve        # separate tab
+ollama pull qwen3.5:9b
+
+pip install -r requirements.txt
+export OLLAMA_BASE_URL=http://localhost:11434/v1
+export ALLOWED_ORIGINS=http://localhost:5500
+uvicorn main:app --reload --port 8000
